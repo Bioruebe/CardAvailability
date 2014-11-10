@@ -1,0 +1,14 @@
+1.03:
+ Added delay between SteamCardExchange requests as server would send a 503 response when more than 2 requests per second are sent
+
+1.02:
+ Fixed script breaking website change resulted in no cards found at all
+ Fixed comparing with inventory failed when card name contains HTML special characters
+
+1.01:
+ Added SteamCardExchange profile link
+ Added creation date to HTML file
+ Fixed exeption when inventory is empty
+ 
+1.00:
+ Initial release
