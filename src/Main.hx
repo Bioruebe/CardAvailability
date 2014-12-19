@@ -50,7 +50,7 @@ class Main
 	static function main() 
 	{
 		var timestamp:Float = Timer.stamp();
-		Bio.Header("Bioruebe's Trading Card Bot Availability Checker", "1.03", "A simple tool to compare a Steam Inventory with available cards at http://www.steamcardexchange.net/index.php?inventory", "[-n:name]\n	-n		Use 'name' as steamID instead of reading it from file\n\n!Cards already in the inventory are skipped.\n!Only sets of which at least one card is owned are considered.\n!If a complete set is in the inventory, no cards will be searched. Craft a badge, then try again.\n");
+		Bio.Header("Bioruebe's Trading Card Bot Availability Checker", "1.04", "A simple tool to compare a Steam Inventory with available cards at http://www.steamcardexchange.net/index.php?inventory", "[-n:name]\n	-n		Use 'name' as steamID instead of reading it from file\n\n!Cards already in the inventory are skipped.\n!Only sets of which at least one card is owned are considered.\n!If a complete set is in the inventory, no cards will be searched. Craft a badge, then try again.\n");
 		
 		getCookie();
 		
@@ -109,9 +109,9 @@ class Main
 			gameName = gameNames.get(o.appID);
 			if (html.indexOf(gameName) == -1) {
 				if (html.indexOf("<ul>") != -1) html += "</ul>";
-				html += "<br><b><a href=\"http://steamcommunity.com/id/" + sSteamID + "/gamecards/" + o.appID + "\">" + gameName + ":</a></b><br><ul>";
+				html += "<br><b><a href=\"http://steamcommunity.com/id/" + sSteamID + "/gamecards/" + o.appID + "\">" + gameName + "</a></b><br><ul>";
 			}
-			html += "<li>" + o.amount + " x " + o.name + " a <a href=\"" + o.url + "\">" + o.price + " Credits</a>";
+			html += "<li>" + o.amount + " x <a href=\"" + o.tradeLink + "\">" + o.name + "</a> a <a href=\"" + o.url + "\">" + o.price + " Credits</a>";
 			trace(gameName + ": " + o.amount + " x " + o.name + " a " + o.price + " Credits");
 		}
 		html += "</ul><br><br><b>" + cardOffers.length + "</b> cards found in total. " + sSteamID.charAt(0).toUpperCase() + sSteamID.substr(1) + "'s inventory contained trading cards from " + iGameCount + " different games.<br><br><small>Created by <a href=\"http://bioruebe.com/cardcheck\">Bioruebe's Trading Card Bot Availability Checker</a>, " + Date.now() + "</small>";
@@ -121,7 +121,7 @@ class Main
 		new Process("cmd", ["/c " + sBasePath + "Cards.html"]);
 		
 		trace("\nCompleted! Processing cards for " + iGameCount + " games took a total of " + Std.string(Std.int(Math.fceil((Timer.stamp() - timestamp) * 100)) / 100) + " seconds.");
-		trace(cardOffers.length + " missing cards found available for trade.\n");
+		trace(cardOffers.length + " missing cards available for trade.\n");
 	}
 	
 	static function OnSteamCards(request:HttpRequest) {
@@ -208,7 +208,9 @@ class Main
 			
 			var amount:Int = Std.parseInt(Bio.StringBetween(html, "Stock:", "</span>"));
 			var price:Int = Std.parseInt(Bio.StringBetween(html, "Price: ", " "));
-			cardOffers.push(new CardOffer(name, amount, price, request.url, request.additionalData[0].market_fee_app));
+			var quickTradeLink:String = Bio.StringBetween(html, "element-button\"><a href=\"", "\"");
+			
+			cardOffers.push(new CardOffer(name, amount, price, request.url, request.additionalData[0].market_fee_app, quickTradeLink));
 			//trace(amount + " x " + name + " a " + price + " Credits");
 			//trace(cardOffers.pop());
 		}

@@ -27,14 +27,16 @@ class CardOffer
 	public var price:Int;
 	public var url:String;
 	public var appID:String;
+	public var tradeLink:String;
 	
-	public function new(name:String, amount:Int, price:Int, url:String, appID:String) 
+	public function new(name:String, amount:Int, price:Int, url:String, appID:String, tradeLink:String) 
 	{
 		this.name = name;
 		this.amount = amount;
 		this.price = price;
 		this.url = url;
 		this.appID = appID;
+		this.tradeLink = tradeLink;
 	}
 	
 }
