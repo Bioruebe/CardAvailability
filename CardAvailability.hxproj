@@ -8,7 +8,7 @@
     <movie fps="0" />
     <movie width="0" />
     <movie height="0" />
-    <movie version="1" />
+    <movie version="0" />
     <movie minorVersion="0" />
     <movie platform="Neko" />
     <movie background="#FFFFFF" />
@@ -28,7 +28,8 @@
   </build>
   <!-- haxelib libraries -->
   <haxelib>
-    <library name="curl" />
+    <library name="akifox-asynchttp" />
+    <library name="bio" />
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>

@@ -1,3 +1,9 @@
+1.10:
+ Added showcase link
+ Fixed error message on Windows 10 Creator's Update
+ Changed dependency from curl to akifox-asynchttp
+ Rewrote request logic
+
 1.04:
  Changed card name is now linked to the destination of the 'quick trade' button
 
