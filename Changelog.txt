@@ -1,3 +1,6 @@
+2.0:
+ Complete rewrite as the haxe version did not work correctly anymore due to problems with the HTML frameworks
+
 1.10:
  Added showcase link
  Fixed error message on Windows 10 Creator's Update
