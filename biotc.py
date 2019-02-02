@@ -16,6 +16,9 @@ async def fetch(session, url):
 	async with session.get(url) as response:
 		return await response.text()
 
+def filter_card_stock_value(raw_string):
+	return raw_string.isdigit() or raw_string in "(+- )"
+
 def owned(inventory, card):
 	for ele in inventory:
 		if ele["name"] == card or ele["name"] == card + " (Trading Card)":
@@ -81,7 +84,7 @@ async def Start():
 				available = item.find(".green, .orange")
 				if not available:
 					continue
-				stock = "".join(filter(str.isdigit, item.find(".card-amount").text()))
+				stock = "".join(filter(filter_card_stock_value, item.find(".card-amount").text()))
 				price = "".join(filter(str.isdigit, item.find(".card-price").eq(1).text()))
 				trade_link = item.find(".button-blue").attr("href")
 
@@ -94,16 +97,17 @@ async def Start():
 					html += "<br><b><a href=\"http://steamcommunity.com/id/" + args.name + "/gamecards/" + appid + "\">" + game_name + "</a></b>&nbsp;<small><a href=\"https://www.steamcardexchange.net/index.php?gamepage-appid-" + appid + "\">Showcase</a></small><br><ul>"
 				i += 1
 
-				html += "<li>" + stock + " x <a href=\"" + trade_link + "\">" + name + "</a> a <a href=\"" + url + "\">" + price + " Credits</a>"
+				html += "<li>" + stock + " x <a href=\"" + trade_link + "\">" + name + "</a> a <a href=\"" + url + "\">" + price + " Credits</a></li>"
 
 			if i > 0:
 				html += "</ul>"
+				# break
 
 			# j += 1
 			# if j > 5:
 			# 	break
 
-		html += "</ul><br><br><b>" + str(html.count("<ul>")) + "</b> cards found in total. " + args.name[0].upper() + args.name[1:] + "'s inventory contained trading cards from " + str(html.count("gamepage-appid")) + " different games.<br><br><small>Created by <a href=\"http://bioruebe.com/cardcheck\">Bioruebe's Trading Card Bot Availability Checker</a>, " + str(datetime.now()) + "</small>"
+		html += "<br><br><b>" + str(html.count("<ul>")) + "</b> cards found in total. " + args.name[0].upper() + args.name[1:] + "'s inventory contained trading cards from " + str(html.count("gamepage-appid")) + " different games.<br><br><small>Created by <a href=\"https://bioruebe.com/dev/cardcheck\">Bioruebe's Trading Card Bot Availability Checker</a>, " + str(datetime.now()) + "</small>"
 		file = open("Cards.html", "w", encoding="utf-8")
 		file.write(html)
 		file.close()
