@@ -11,6 +11,7 @@ import aiohttp
 from pyquery import PyQuery
 
 card_requests = {}
+STEAM_ID_FILE_NAME = "SteamID.txt"
 
 async def fetch(session, url):
 	async with session.get(url) as response:
@@ -28,23 +29,25 @@ def owned(inventory, card):
 async def Start():
 	timestamp = time.time()
 
-	parser = argparse.ArgumentParser(description="")
-	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="")
+	parser = argparse.ArgumentParser(description="BioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
+	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="Use specified Steam ID instead of reading it from " + STEAM_ID_FILE_NAME)
+	parser.print_help()
+	print("\n-----------------------------------------------------------------------------\n")
 	args = parser.parse_args()
 
 	if args.name is None:
 		try:
-			f = open("SteamID.txt")
+			f = open(STEAM_ID_FILE_NAME)
 			args.name = f.read()
 		except:
 			pass
 	if args.name is None:
-		sys.exit("Can not read SteamID from file. Make sure the file 'steamID.txt' contains a valid SteamID.")
+		sys.exit("Error: Could not read SteamID from file. Make sure the file '" + STEAM_ID_FILE_NAME + "' contains a valid SteamID.")
 
-	html = "<h2><a href=\"http://steamcommunity.com/tradeoffer/new/?partner=83905207&token=tEx7-bXd\">Make Offer</a></h2><h3><a href= \"http://www.steamcardexchange.net/index.php?profile\">Your Credits</a></h3>"
+	html = "<h2><a href=\"https://steamcommunity.com/tradeoffer/new/?partner=83905207&token=tEx7-bXd\">Make Offer</a></h2><h3><a href= \"https://www.steamcardexchange.net/index.php?profile\">Your Credits</a></h3>"
 	async with aiohttp.ClientSession() as session:
 		print("Loading Steam inventory")
-		url = "http://steamcommunity.com/id/" + args.name + "/inventory/json/753/6"
+		url = "https://steamcommunity.com/id/" + args.name + "/inventory/json/753/6"
 		raw_json = await fetch(session, url)
 		cardData = json.loads(raw_json)
 		# print(cardData)
@@ -94,7 +97,7 @@ async def Start():
 
 				print(stock + " x " + name + " a " + price + " Credits")
 				if i == 0:
-					html += "<br><b><a href=\"http://steamcommunity.com/id/" + args.name + "/gamecards/" + appid + "\">" + game_name + "</a></b>&nbsp;<small><a href=\"https://www.steamcardexchange.net/index.php?gamepage-appid-" + appid + "\">Showcase</a></small><br><ul>"
+					html += "<br><b><a href=\"https://steamcommunity.com/id/" + args.name + "/gamecards/" + appid + "\">" + game_name + "</a></b>&nbsp;<small><a href=\"https://www.steamcardexchange.net/index.php?gamepage-appid-" + appid + "\">Showcase</a></small><br><ul>"
 				i += 1
 
 				html += "<li>" + stock + " x <a href=\"" + trade_link + "\">" + name + "</a> a <a href=\"" + url + "\">" + price + " Credits</a></li>"
@@ -107,7 +110,8 @@ async def Start():
 			# if j > 5:
 			# 	break
 
-		html += "<br><br><b>" + str(html.count("<ul>")) + "</b> cards found in total. " + args.name[0].upper() + args.name[1:] + "'s inventory contained trading cards from " + str(html.count("gamepage-appid")) + " different games.<br><br><small>Created by <a href=\"https://bioruebe.com/dev/cardcheck\">Bioruebe's Trading Card Bot Availability Checker</a>, " + str(datetime.now()) + "</small>"
+		processing_time = "{:.1f}".format(time.time() - timestamp)
+		html += "<br><br><b>" + str(html.count("<ul>")) + "</b> cards found in total. " + args.name[0].upper() + args.name[1:] + "'s inventory contained trading cards from " + str(html.count("gamepage-appid")) + " different games. Processing took " + processing_time + "seconds.<br><br><small>Created by <a href=\"https://bioruebe.com/dev/cardcheck\">Bioruebe's Trading Card Bot Availability Checker</a>, " + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()) + "</small>"
 		file = open("Cards.html", "w", encoding="utf-8")
 		file.write(html)
 		file.close()
