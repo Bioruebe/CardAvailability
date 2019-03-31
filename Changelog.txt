@@ -1,3 +1,12 @@
+3.0:
+ Added new UI
+ Added sorting options
+ Added total cost and progress display to each set
+ Added button to hide card sets
+ Changed UI to also display cards already in inventory
+ Changed UI to also display cards not in stock
+ Changed trade links to open in new tab
+
 2.0:
  Complete rewrite as the haxe version did not work correctly anymore due to problems with the HTML frameworks
 
