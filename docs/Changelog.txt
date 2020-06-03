@@ -1,3 +1,8 @@
+3.1
+ Changed UI to show 'pending' cards separately instead of adding them to the total stock count
+ Changed non-marketable cards in inventory are now skipped as they cannot be traded with the bot
+ Fixed total price calculation for sets with out-of-stock cards
+
 3.0:
  Added new UI
  Added sorting options
