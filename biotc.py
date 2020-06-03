@@ -12,6 +12,7 @@ from jinja2 import Environment, FileSystemLoader
 
 card_requests = {}
 STEAM_ID_FILE_NAME = "SteamID.txt"
+DEBUG = False
 
 class Card:
 	def __init__(self, name):
@@ -38,7 +39,7 @@ class Set:
 		self.cards = []
 
 	def __str__(self):
-		return "[" + self.name + "]\n" + '\n'.join(str(c) for c in self.cards)
+		return "[" + self.name + "]\n" + "\n".join(str(c) for c in self.cards)
 
 	def bot_inventory_is_empty(self):
 		for card in self.cards:
@@ -81,7 +82,8 @@ class Set:
 				card.li_class = "surplus"
 			elif card.user_inventory > 0:
 				card.li_class = "owned"
-			elif card.bot_inventory + card.bot_inventory_pending < 2:
+			# elif card.bot_inventory + card.bot_inventory_pending < 2:
+			elif card.bot_inventory < 2:
 				card.li_class = "unavailable"
 
 
@@ -110,6 +112,12 @@ def get_card_amount_in_inventory(inventory, item_data, card_name):
 
 	return count
 
+def to_int(string):
+	try:
+		return int("".join(filter(str.isdigit, string)))
+	except ValueError:
+		return 0
+
 def owned(inventory, card):
 	for ele in inventory:
 		if compare_card(ele["name"], card):
@@ -119,7 +127,7 @@ def owned(inventory, card):
 async def Start():
 	timestamp = time.time()
 
-	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2019, Version 3.0.0, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
+	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2020, Version 3.1.0, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
 	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="Use specified Steam ID instead of reading it from " + STEAM_ID_FILE_NAME)
 	parser.add_argument("-l", "--limit", action="store", type=int, default=-1, help="Stop searching after n sets have been found")
 	args = parser.parse_args()
@@ -139,7 +147,7 @@ async def Start():
 	result = {
 		"sets": [],
 		"steamID": args.name,
-		"cardsCount": 0,
+		"cardCount": 0,
 		"gameCount": 0,
 		"completeSets": 0,
 		"processingTime": 0,
@@ -149,20 +157,33 @@ async def Start():
 	async with aiohttp.ClientSession() as session:
 		print("Loading Steam inventory")
 		url = "https://steamcommunity.com/id/" + args.name + "/inventory/json/753/6"
-		raw_json = await fetch(session, url)
-		cardData = json.loads(raw_json)
+		
+		if DEBUG:
+			with open("data.json") as json_file:
+				cardData = json.load(json_file)
+		else:
+			raw_json = await fetch(session, url)
+			cardData = json.loads(raw_json)
+		
 		# print(cardData)
 		if cardData is None or not cardData["success"]:
 			sys.exit("Invalid JSON data received. Aborting.")
 
+		game_ids = set()
 		for key, card in cardData["rgDescriptions"].items():
 			# Ignore emoticons, backgrounds
 			if "Trading Card" not in card["type"]:
 				# print(card["name"] + " is not a trading card.")
 				continue
-			# print(card)
 
 			appid = card["market_fee_app"]
+			game_ids.add(appid)
+
+			# print(card)
+			if card["marketable"] < 1:
+				# print(card["name"] + " is not marketable and cannot be traded with the bot.")
+				continue
+
 			try:
 				game_cards = card_requests[appid]
 				game_cards.append(card)
@@ -170,7 +191,7 @@ async def Start():
 				card_requests[appid] = [card]
 
 		i = 0
-		result["gameCount"] = len(card_requests)
+		result["gameCount"] = len(game_ids)
 		for appid, inventory in card_requests.items():
 			print("Processing " + appid)
 			url = "https://www.steamcardexchange.net/index.php?inventorygame-appid-" + appid
@@ -180,6 +201,8 @@ async def Start():
 			game_name = dom("h2").text()
 			card_items = dom.items(".inventory-game-card-item")
 			card_set = Set(appid, game_name)
+			card_set.standard_price = to_int(dom(".game-price").text().split("/")[1])
+
 			# print(inventory)
 			for item in card_items:
 				card = Card(item.find(".card-name").text().strip())
@@ -195,12 +218,9 @@ async def Start():
 				if len(stock) > 1:
 					card.bot_inventory_pending = stock[1]
 
-				try:
-					card.price = int("".join(filter(str.isdigit, item.find(".card-price").eq(1).text())))
-					if card_set.standard_price < 1 and card.bot_inventory > 1:
-						card_set.standard_price = card.price
-				except ValueError:
-					pass
+				card.price = to_int(item.find(".card-price").eq(1).text())
+				if card.price < 1:
+					card.price = card_set.standard_price
 
 				card.trade_url = item.find(".button-blue").attr("href")
 				card.user_inventory = get_card_amount_in_inventory(cardData, inventory, card.name)
@@ -228,8 +248,10 @@ async def Start():
 			if args.limit > 0 and i >= args.limit:
 				break
 
+		if DEBUG:
+			return
 		env = Environment(loader=FileSystemLoader("."))
-		template = env.get_template('template.html')
+		template = env.get_template("template.html")
 
 		result["cardCount"] = sum(len(list(filter(lambda c: c.user_inventory < 1, s.cards))) for s in result["sets"])
 		result["processingTime"] = "{:.1f}".format(time.time() - timestamp)

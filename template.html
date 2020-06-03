@@ -144,7 +144,7 @@
 									<ul>
 										{% for card in set.cards %}
 										<li class="{{ card.li_class }}">
-											{{ card.bot_inventory + card.bot_inventory_pending }} x <a href="{{ card.trade_url if card.trade_url }}" target="_blank" onclick="SetOwned(this);">{{ card.name }}</a> a <a href="https://www.steamcardexchange.net/index.php?inventorygame-appid-{{ set.appid }}" target="_blank">{{ card.price if card.price > 0 else set.standard_price }} Credits</a>
+											{{ card.bot_inventory }} {% if card.bot_inventory_pending > 0 %} <span class="is-size-7">(+{{ card.bot_inventory_pending }})</span> {% endif %} x <a href="{{ card.trade_url if card.trade_url }}" target="_blank" onclick="SetOwned(this);">{{ card.name }}</a> a <a href="https://www.steamcardexchange.net/index.php?inventorygame-appid-{{ set.appid }}" target="_blank">{{ card.price if card.price > 0 else set.standard_price }} Credits</a>
 										</li>
 										{% endfor %}
 									</ul>
@@ -169,16 +169,16 @@
 	</footer>
 	
 	<script>
-		var sortSetting = localStorage.getItem("biotc_sorting");
+		let sortSetting = localStorage.getItem("biotc_sorting");
 		if (sortSetting) SortSets(sortSetting);
 		
 		function SetOwned(element) {
 			element.parentElement.classList.add("owned");
-			var setElement = element.parentElement.parentElement.parentElement.parentElement.parentElement;
-			var unownedCount = setElement.querySelectorAll("li[class=''], li[class='unavailable']").length;
+			let setElement = element.parentElement.parentElement.parentElement.parentElement.parentElement;
+			let unownedCount = setElement.querySelectorAll("li[class=''], li[class='unavailable']").length;
 //			if (unownedCount < 1) return setElement.parentElement.removeChild(setElement);
 			
-			var progress = setElement.querySelector("progress");
+			let progress = setElement.querySelector("progress");
 			progress.value = progress.max - unownedCount;
 			SetProgressColor(progress);
 			setElement.querySelector(".cost").textContent = (unownedCount * setElement.dataset.cardPrice) + "¢";
@@ -190,8 +190,8 @@
 		
 		function SetProgressColor(progress) {
 			progress.classList.remove("is-danger", "is-warning", "is-success");
-			var progressValue = progress.value / progress.max;
-			var cls;
+			let progressValue = progress.value / progress.max;
+			let cls;
 			
 			if (progressValue < 0.4) {
 				cls = "is-danger";
@@ -207,22 +207,22 @@
 		}
 		
 		function RemoveSet(element) {
-			var setElement = element.parentElement.parentElement.parentElement
+			let setElement = element.parentElement.parentElement.parentElement
 			setElement.parentElement.removeChild(setElement);
 		}
 		
 		function SortSets(selectedIndex) {
-			var sortSelect = document.getElementById("sort-select");
+			let sortSelect = document.getElementById("sort-select");
 			if (selectedIndex === undefined) selectedIndex = sortSelect.selectedIndex;
-			var by = sortSelect.options[selectedIndex].value;
-			var container = document.getElementById("set-container");
-			var divs = Array.from(container.children);
-			var sortFunction;
+			let by = sortSelect.options[selectedIndex].value;
+			let container = document.getElementById("set-container");
+			let divs = Array.from(container.children);
+			let sortFunction;
 			
 			localStorage.setItem("biotc_sorting", selectedIndex);
 			sortSelect.options[selectedIndex].selected = true;
 			
-			switch(by) {
+			switch (by) {
 				case "SORT_ALPHABET":
 					sortFunction = (a, b) => a.querySelector(".title").textContent.localeCompare(b.querySelector(".title").textContent);
 					break;
@@ -237,7 +237,7 @@
 			divs.sort(sortFunction);
 			
 			container.innerHTML = "";
-			for(var el of divs) {
+			for(let el of divs) {
 				container.appendChild(el);
 			}
 		}
