@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 
@@ -87,6 +88,25 @@ class Set:
 				card.li_class = "unavailable"
 
 
+async def is_steam_id_64(id_or_name):
+	steam_id64_regex = r"^[0-9]{17}$"
+	return bool(re.match(steam_id64_regex, id_or_name))
+
+async def get_steam_id64_from_name(name):
+	print("The given Steam ID has an invalid format. Trying to resolve it as a Steam Community profile name...")
+	async with aiohttp.ClientSession() as session:
+		async with session.get("https://steamcommunity.com/id/" + name + "/?xml=1") as response:
+			if response.status == 200:
+				xml = PyQuery(await response.read(), parser="xml")
+				return xml("steamID64").text()
+
+			print("The given Steam ID or profile name could not be resolved. Please enter the Steam ID64 manually.")
+			sys.exit(1)
+
+def save_steam_id(steam_id):
+	with open(STEAM_ID_FILE_NAME, "w") as file:
+		file.write(steam_id)
+
 async def fetch(session, url):
 	async with session.get(url) as response:
 		return await response.text()
@@ -104,8 +124,8 @@ def get_card_amount_in_inventory(inventory, item_data, card_name):
 		if compare_card(ele["name"], card_name):
 			instance_id = ele["instanceid"]
 			class_id = ele["classid"]
-			# Every card is a seperate inventory item, they don't stack. That's why amount is not reliable.
-			for key, value in inventory["rgInventory"].items():
+			# Every card is a separate inventory item, they don't stack. That's why amount is not reliable.
+			for value in inventory["assets"]:
 				if value["classid"] == class_id and value["instanceid"] == instance_id:
 					# In case they stack in the future parse the amount instead of just +1
 					count += int(value["amount"])
@@ -127,8 +147,8 @@ def owned(inventory, card):
 async def Start():
 	timestamp = time.time()
 
-	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2020, Version 3.1.0, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
-	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="Use specified Steam ID instead of reading it from " + STEAM_ID_FILE_NAME)
+	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2022, Version 3.1.1, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
+	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="Use specified Steam ID64 instead of reading it from " + STEAM_ID_FILE_NAME)
 	parser.add_argument("-l", "--limit", action="store", type=int, default=-1, help="Stop searching after n sets have been found")
 	args = parser.parse_args()
 
@@ -137,12 +157,20 @@ async def Start():
 
 	if args.name is None:
 		try:
-			f = open(STEAM_ID_FILE_NAME)
-			args.name = f.read()
+			with open(STEAM_ID_FILE_NAME, encoding="utf-8") as f:
+				args.name = f.read()
+			if not await is_steam_id_64(args.name):
+				args.name = await get_steam_id64_from_name(args.name)
+				print("Saving resolved SteamID to file '" + STEAM_ID_FILE_NAME + "'")
+				save_steam_id(args.name)
 		except:
 			pass
-	if args.name is None:
-		sys.exit("Error: Could not read SteamID from file. Make sure the file '" + STEAM_ID_FILE_NAME + "' contains a valid SteamID.")
+
+		if args.name is None:
+			print("Error: Could not read SteamID from file. Make sure the file '" + STEAM_ID_FILE_NAME + "' contains a valid SteamID.")
+			sys.exit(1)
+	elif not await is_steam_id_64(args.name):
+		args.name = await get_steam_id64_from_name(args.name)
 
 	result = {
 		"sets": [],
@@ -155,22 +183,25 @@ async def Start():
 	}
 
 	async with aiohttp.ClientSession() as session:
-		print("Loading Steam inventory")
-		url = "https://steamcommunity.com/id/" + args.name + "/inventory/json/753/6"
-		
+		print("Loading Steam inventory of user " + args.name)
+		url = f"https://steamcommunity.com/inventory/{args.name}/753/6?l=english&count=5000"
+
 		if DEBUG:
 			with open("data.json") as json_file:
 				cardData = json.load(json_file)
 		else:
 			raw_json = await fetch(session, url)
 			cardData = json.loads(raw_json)
-		
+
 		# print(cardData)
 		if cardData is None or not cardData["success"]:
+			if (cardData["Error"]):
+				print("Error: " + cardData["Error"])
+				print("Profile URL is " + url)
 			sys.exit("Invalid JSON data received. Aborting.")
 
 		game_ids = set()
-		for key, card in cardData["rgDescriptions"].items():
+		for card in cardData["descriptions"]:
 			# Ignore emoticons, backgrounds
 			if "Trading Card" not in card["type"]:
 				# print(card["name"] + " is not a trading card.")
@@ -193,8 +224,8 @@ async def Start():
 		i = 0
 		result["gameCount"] = len(game_ids)
 		for appid, inventory in card_requests.items():
-			print("Processing " + appid)
-			url = "https://www.steamcardexchange.net/index.php?inventorygame-appid-" + appid
+			print(f"Processing {appid}")
+			url = f"https://www.steamcardexchange.net/index.php?inventorygame-appid-{appid}"
 			resp = await fetch(session, url)
 			time.sleep(0.5)
 			dom = PyQuery(resp)
@@ -248,6 +279,7 @@ async def Start():
 			if args.limit > 0 and i >= args.limit:
 				break
 
+		print("\nProcessing complete.")
 		if DEBUG:
 			return
 		env = Environment(loader=FileSystemLoader("."))
@@ -257,11 +289,14 @@ async def Start():
 		result["processingTime"] = "{:.1f}".format(time.time() - timestamp)
 		result["time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
+		print("Creating HTML file")
 		html = template.render(result)
 
 		file = open("Cards.html", "w", encoding="utf-8")
 		file.write(html)
 		file.close()
+
+		print("Opening generated file")
 		os.startfile("Cards.html")
 
 if __name__ == '__main__':

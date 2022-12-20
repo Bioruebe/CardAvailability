@@ -1,3 +1,6 @@
+3.1.1
+ The previous versions stopped working due to changes to the Steam API. This update restores functionality.
+
 3.1
  Changed UI to show 'pending' cards separately instead of adding them to the total stock count
  Changed non-marketable cards in inventory are now skipped as they cannot be traded with the bot

@@ -136,7 +136,7 @@
 									<div class="cost is-pulled-right">{{ set.total_cost }}¢</div>
 									<button class="delete" onclick="RemoveSet(this);"></button>
 									<span class="title is-5">
-										<b><a href="http://steamcommunity.com/id/bioruebe/gamecards/{{ set.appid }}" target="_blank">{{ set.name }}</a></b>
+										<b><a href="http://steamcommunity.com/profiles/{{ steamID }}/gamecards/{{ set.appid }}" target="_blank">{{ set.name }}</a></b>
 									</span>
 									<span class="subtitle is-6">
 										&nbsp;<a href="https://www.steamcardexchange.net/index.php?gamepage-appid-{{ set.appid }}" target="_blank">Showcase</a>
@@ -161,7 +161,7 @@
 
 	<footer class="footer has-text-centered">
 		<p>
-			<b>{{ cardCount }}</b> cards found in total. <span class="is-capitalized">{{ steamID }}'s</span> inventory contains trading cards from <b>{{ gameCount }}</b> different games, including <b>{{ completeSets }}</b> full set{{"s" if completeSets != 1}}. Processing took {{ processingTime }} seconds.
+			<b>{{ cardCount }}</b> cards found in total. <a href="https://steamcommunity.com/profiles/{{ steamID }}/inventory/">The Inventory</a> contains trading cards from <b>{{ gameCount }}</b> different games, including <b>{{ completeSets }}</b> full set{{"s" if completeSets != 1}}. Processing took {{ processingTime }} seconds.
 		</p>
 		<p>
 			<small>Created by <a href="https://bioruebe.com/dev/cardcheck">Bioruebe's Trading Card Bot Availability Checker</a>, {{ time }}</small>
