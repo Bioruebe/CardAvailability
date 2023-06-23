@@ -150,6 +150,7 @@ async def Start():
 	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2022, Version 3.1.1, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
 	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="Use specified Steam ID64 instead of reading it from " + STEAM_ID_FILE_NAME)
 	parser.add_argument("-l", "--limit", action="store", type=int, default=-1, help="Stop searching after n sets have been found")
+	parser.add_argument("-d", "--delay", action="store", type=float, default=0.5, help="Delay between requests in seconds. Setting this too low may result in a temporary ban and/or failed requests. Default: 0.5. Minimum: 0.1")
 	args = parser.parse_args()
 
 	parser.print_help()
@@ -171,6 +172,9 @@ async def Start():
 			sys.exit(1)
 	elif not await is_steam_id_64(args.name):
 		args.name = await get_steam_id64_from_name(args.name)
+
+	if args.delay < 0.1:
+		args.delay = 0.1
 
 	result = {
 		"sets": [],
@@ -227,7 +231,7 @@ async def Start():
 			print(f"Processing {appid}")
 			url = f"https://www.steamcardexchange.net/index.php?inventorygame-appid-{appid}"
 			resp = await fetch(session, url)
-			time.sleep(0.5)
+			time.sleep(args.delay)
 			dom = PyQuery(resp)
 			info_box = dom(".flex.flex-col.justify-center.p-5.gap-y-1").children()
 			game_name = info_box.eq(0).text()
