@@ -104,7 +104,7 @@ async def get_steam_id64_from_name(name):
 			sys.exit(1)
 
 def save_steam_id(steam_id):
-	with open(STEAM_ID_FILE_NAME, "w") as file:
+	with open(STEAM_ID_FILE_NAME, "w", encoding="utf8") as file:
 		file.write(steam_id)
 
 async def fetch(session, url):
@@ -187,7 +187,7 @@ async def Start():
 		url = f"https://steamcommunity.com/inventory/{args.name}/753/6?l=english&count=5000"
 
 		if DEBUG:
-			with open("data.json") as json_file:
+			with open("data.json", encoding="utf8") as json_file:
 				cardData = json.load(json_file)
 		else:
 			raw_json = await fetch(session, url)
@@ -195,7 +195,7 @@ async def Start():
 
 		# print(cardData)
 		if cardData is None or not cardData["success"]:
-			if (cardData["Error"]):
+			if cardData and cardData["Error"]:
 				print("Error: " + cardData["Error"])
 				print("Profile URL is " + url)
 			sys.exit("Invalid JSON data received. Aborting.")
@@ -229,31 +229,32 @@ async def Start():
 			resp = await fetch(session, url)
 			time.sleep(0.5)
 			dom = PyQuery(resp)
-			game_name = dom("h2").text()
-			card_items = dom.items(".inventory-game-card-item")
+			info_box = dom(".flex.flex-col.justify-center.p-5.gap-y-1").children()
+			game_name = info_box.eq(0).text()
+			card_items = dom.items(".grid .flex-col")
 			card_set = Set(appid, game_name)
-			card_set.standard_price = to_int(dom(".game-price").text().split("/")[1])
+			card_set.standard_price = to_int(info_box.eq(1).text().split("/")[1])
 
 			# print(inventory)
 			for item in card_items:
-				card = Card(item.find(".card-name").text().strip())
+				divs = item.find("div")
+				card = Card(divs.eq(0).text().strip())
 				if card.name == "":
 					# print("[Warning] Invalid card name: " + card.name)
 					continue
 
-				# available = item.find(".green, .orange")
-				# if not available:
-				# 	continue
-				stock = filter_card_stock_value(item.find(".card-amount").text())
+				price_info = divs.eq(1).children()
+				stock = filter_card_stock_value(price_info.eq(0).text())
 				card.bot_inventory = stock[0]
 				if len(stock) > 1:
 					card.bot_inventory_pending = stock[1]
 
-				card.price = to_int(item.find(".card-price").eq(1).text())
+				card.price = to_int(price_info.eq(1).text())
 				if card.price < 1:
 					card.price = card_set.standard_price
 
-				card.trade_url = item.find(".button-blue").attr("href")
+				trade_url = item.find("a")
+				card.trade_url = trade_url.attr("href") if trade_url else None
 				card.user_inventory = get_card_amount_in_inventory(cardData, inventory, card.name)
 				card_set.cards.append(card)
 
