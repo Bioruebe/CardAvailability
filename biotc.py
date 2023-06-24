@@ -187,13 +187,14 @@ async def Start():
 	}
 
 	async with aiohttp.ClientSession() as session:
-		print("Loading Steam inventory of user " + args.name)
 		url = f"https://steamcommunity.com/inventory/{args.name}/753/6?l=english&count=5000"
 
 		if DEBUG:
+			print("Warning: Debug mode is enabled. Loading inventory from local file.")
 			with open("data.json", encoding="utf8") as json_file:
 				cardData = json.load(json_file)
 		else:
+			print("Loading Steam inventory of user " + args.name)
 			raw_json = await fetch(session, url)
 			cardData = json.loads(raw_json)
 
@@ -285,8 +286,6 @@ async def Start():
 				break
 
 		print("\nProcessing complete.")
-		if DEBUG:
-			return
 		env = Environment(loader=FileSystemLoader("."))
 		template = env.get_template("template.html")
 
