@@ -2,6 +2,7 @@ CardAvailability
 ================
 
 #### About
+
 Bioruebe's Trading Card Bot Availability Checker (BioTC) is a small application to simplify trading Steam Trading Cards with the [SteamCardExchange bot](https://www.steamcardexchange.net/index.php?guide).
 
 SteamCardExchange provides an online interface to check for available trading cards. Comparing your own card to the bot's inventory is a lengthy process though, which BioTC automates for you.
@@ -42,6 +43,11 @@ Note: although the program's output looks like a web page, it isn't. **The overv
 
 ##### Command line usage
 
-Alternatively, you can run BioTC from the command line. Type `biotc --help` to show a list of all supported command line parameters.
+Alternatively, you can run BioTC from the command line. The following parameters can be used to further configure the tool:
 
-Instead of having a `SteamID.txt` file, the Steam ID64 can be provided via the `-n` or `--name` parameter.
+| Short parameter | Long parameter | Description                                                                                                                                                             |
+| --------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -h              | --help         | List all supported command line parameters                                                                                                                              |
+| -n              | --name         | Use specified Steam ID64 instead of reading it from `SteamID.txt`                                                                                                       |
+| -l              | --limit        | Stop searching after `N` sets have been found                                                                                                                           |
+| -d              | --delay        | Delay between requests in seconds. Setting this too low may result in a temporary ban and/or failed requests. Default is 0.5 and minimum possible value is 0.1 seconds. |
