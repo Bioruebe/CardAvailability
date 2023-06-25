@@ -1,3 +1,8 @@
+3.2
+ Added support for new SteamCardExchange website
+ Added command line parameter to set delay between requests
+ Fixed crash if loading Steam inventory fails
+
 3.1.1
  The previous versions stopped working due to changes to the Steam API. This update restores functionality.
 
