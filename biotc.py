@@ -147,7 +147,7 @@ def owned(inventory, card):
 async def Start():
 	timestamp = time.time()
 
-	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2022, Version 3.1.1, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
+	parser = argparse.ArgumentParser(description="BioTC by Bioruebe (https://bioruebe.com), 2014-2023, Version 3.2, released under a BSD 3-clause style license.\n\nBioTC is a small application to simplify trading Steam Trading Cards with the SteamCardExchange bot by comparing the user's Steam inventory with the available cards on steamcardexchange.net")
 	parser.add_argument("-n", "--name", action="store", type=str, default=None, help="Use specified Steam ID64 instead of reading it from " + STEAM_ID_FILE_NAME)
 	parser.add_argument("-l", "--limit", action="store", type=int, default=-1, help="Stop searching after n sets have been found")
 	parser.add_argument("-d", "--delay", action="store", type=float, default=0.5, help="Delay between requests in seconds. Setting this too low may result in a temporary ban and/or failed requests. Default: 0.5. Minimum: 0.1")
